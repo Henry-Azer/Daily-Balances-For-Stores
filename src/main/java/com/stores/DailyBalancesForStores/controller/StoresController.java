@@ -20,6 +20,6 @@ public class StoresController {
         model.addAttribute("HDPE", productServices.getProductsByType("HDPE"));
         model.addAttribute("PVC", productServices.getProductsByType("PVC"));
 
-        return "home";
+        return "home-page";
     }
 }
