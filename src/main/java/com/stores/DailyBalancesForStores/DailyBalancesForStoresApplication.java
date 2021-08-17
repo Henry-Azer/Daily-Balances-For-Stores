@@ -5,17 +5,21 @@ import com.stores.DailyBalancesForStores.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Scanner;
 
 @SpringBootApplication
 public class DailyBalancesForStoresApplication {
+
+	@Autowired
+	private ResourceLoader resourceloader;
 
 	@Autowired
 	private ProductRepository productRepository;
@@ -26,7 +30,8 @@ public class DailyBalancesForStoresApplication {
 
 	@PostConstruct
 	public void initBalances() throws FileNotFoundException, URISyntaxException {
-		Scanner scan = new Scanner(new File(getClass().getResource("/static/csv/TotalBalancesOfAugust.csv").toURI()));
+
+		Scanner scan = new Scanner(streamToFile(getClass().getClassLoader().getResourceAsStream("static/csv/TotalBalancesOfAugust.csv")));
 		ArrayList<String[]> records = new ArrayList<>();
 		String[] record;
 		while(scan.hasNext()) {
@@ -55,5 +60,28 @@ public class DailyBalancesForStoresApplication {
 			productCollection.add(balance);
 		}
 		productRepository.saveAll(productCollection);
+	}
+	public static File streamToFile(InputStream in) {
+		if (in == null) {
+			return null;
+		}
+
+		try {
+			File f = File.createTempFile(String.valueOf(in.hashCode()), ".tmp");
+			f.deleteOnExit();
+
+			FileOutputStream out = new FileOutputStream(f);
+			byte[] buffer = new byte[1024];
+
+			int bytesRead;
+			while ((bytesRead = in.read(buffer)) != -1) {
+				out.write(buffer, 0, bytesRead);
+			}
+
+			return f;
+		} catch (IOException e) {
+			//  LOGGER.error(e.getMessage(), e);
+			return null;
+		}
 	}
 }
